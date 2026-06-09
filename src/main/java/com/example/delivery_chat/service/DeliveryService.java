@@ -30,4 +30,8 @@ public class DeliveryService {
     public DeliveryDetailResponse getDeliveryDetail(Long deliveryId) {
         return deliveryMapper.findDetailById(deliveryId);
     }
+
+    public List<Delivery> getDeliveriesByCustomerId(Long customerId) {
+        return deliveryMapper.findByCustomerId(customerId);
+    }
 }

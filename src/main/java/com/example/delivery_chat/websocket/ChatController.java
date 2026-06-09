@@ -7,6 +7,9 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import com.example.delivery_chat.service.MessageService;
 import com.example.delivery_chat.dto.MessageRequest;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 // Handles WebSocket chat messages
 @Controller
 public class ChatController {
@@ -30,6 +33,10 @@ public class ChatController {
 
         // Save message to database
         messageService.sendMessage(chatMessage.getDeliveryId(), request);
+
+        // Add created time for real-time WebSocket display 
+        String createdAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")); 
+        chatMessage.setCreatedAt(createdAt);
 
         String topic = "/topic/deliveries/" + chatMessage.getDeliveryId();
         System.out.println("Broadcasting to: " + topic);

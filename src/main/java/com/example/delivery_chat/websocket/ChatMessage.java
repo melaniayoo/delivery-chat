@@ -5,6 +5,7 @@ public class ChatMessage {
     private String senderType;
     private Long senderId;
     private String content;
+    private String createdAt;
 
     public Long getDeliveryId() {
         return deliveryId;
@@ -22,6 +23,10 @@ public class ChatMessage {
         return content;
     }
 
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
     public void setDeliveryId(Long deliveryId) {
         this.deliveryId = deliveryId;
     }
@@ -36,5 +41,9 @@ public class ChatMessage {
 
     public void setCotent(String content) {
         this.content = content;
+    }
+
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
     }
 }

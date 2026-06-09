@@ -45,4 +45,9 @@ public class DeliveryController {
     public DeliveryDetailResponse getDeliveryDetail(@PathVariable Long deliveryId) {
         return deliveryService.getDeliveryDetail(deliveryId);
     }
+
+    @GetMapping("/customers/{customerId}/deliveries")
+    public List<Delivery> getDeliveriesByCustomerId(@PathVariable Long customerId) {
+        return deliveryService.getDeliveriesByCustomerId(customerId);
+    }
 }
