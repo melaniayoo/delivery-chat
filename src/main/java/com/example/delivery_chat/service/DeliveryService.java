@@ -3,6 +3,7 @@ package com.example.delivery_chat.service;
 import com.example.delivery_chat.dto.DeliveryDetailResponse;
 import com.example.delivery_chat.entity.Delivery;
 import com.example.delivery_chat.mapper.DeliveryMapper;
+import com.example.delivery_chat.dto.DeliveryRequest;
 
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -33,5 +34,13 @@ public class DeliveryService {
 
     public List<Delivery> getDeliveriesByCustomerId(Long customerId) {
         return deliveryMapper.findByCustomerId(customerId);
+    }
+
+    public void createDelivery(DeliveryRequest request) {
+        String status = request.getStatus();
+        if (status == null || status.isBlank()) {
+            status = "READY";
+        }
+        deliveryMapper.insertDelivery(request.getCustomerId(), request.getDriverId(), request.getDeliveryAddress(), status);
     }
 }

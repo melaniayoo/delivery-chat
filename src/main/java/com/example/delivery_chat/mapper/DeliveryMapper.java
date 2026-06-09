@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.Insert;
 
 import java.util.List;
 
@@ -81,4 +82,13 @@ public interface DeliveryMapper {
         ORDER BY id ASC
     """)
     List<Delivery> findByCustomerId(Long customerId);
+
+    @Insert("""
+        INSERT INTO deliveries (customer_id, driver_id, delivery_address, status)
+        VALUES (#{customerId}, #{driverId}, #{deliveryAddress}, #{status})
+    """)
+    void insertDelivery(@Param("customerId") Long customerId,
+                        @Param("driverId") Long driverId,
+                        @Param("deliveryAddress") String deliveryAddress,
+                        @Param("status") String status);
 }

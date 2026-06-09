@@ -2,6 +2,7 @@ package com.example.delivery_chat.service;
 
 import com.example.delivery_chat.entity.Customer;
 import com.example.delivery_chat.mapper.CustomerMapper;
+import com.example.delivery_chat.dto.CustomerRequest;
 
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -20,5 +21,8 @@ public class CustomerService {
     public List<Customer> getAllCustomers() {
         return customerMapper.findAll();
     }
-    
+
+    public void createCustomer(CustomerRequest request) {
+        customerMapper.insertCustomer(request.getName(), request.getPhoneNumber());
+    }
 }
