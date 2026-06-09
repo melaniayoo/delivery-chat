@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Customer Order Page</title>
+</head>
+<body>
+    <h1>고객 주문 페이지</h1>
+
+    <p>고객 등록 후 배송 요청을 생성하는 화면입니다. 배송기사는 서버에서 자동 배정됩니다.</p>
+
+    <hr>
+
+    <h2>고객 등록</h2>
+    <div>
+        <label>고객 이름:</label>
+        <input type="text" id="customerName" placeholder="예: 홍길동">
+
+        <label>전화번호:</label>
+        <input type="text" id="customerPhoneNumber" placeholder="예: 010-0000-0000">
+
+        <button onclick="createCustomer()">고객 등록</button>
+    </div>
+
+    <hr>
+
+    <h2>배송 요청 생성</h2>
+    <div>
+        <label>고객 ID:</label>
+        <input type="number" id="deliveryCustomerId" placeholder="예: 1">
+
+        <br><br>
+
+        <label>배송 주소:</label>
+        <input type="text" id="deliveryAddress" placeholder="예: 서울시 강남구 테헤란로 123" style="width: 350px;">
+
+        <button onclick="createDelivery()">배송 요청 생성</button>
+    </div>
+
+    <h3>내 배송 확인</h3>
+    <p>배송 생성 후 고객 ID로 배송 상태와 채팅을 확인할 수 있습니다.</p>
+
+    <button onclick="goToCustomerDeliveryPage()">고객 배송 조회 페이지로 이동</button>
+
+    <script>
+        function createCustomer() {
+            const name = document.getElementById("customerName").value;
+            const phoneNumber = document.getElementById("customerPhoneNumber").value;
+
+            if (!name.trim()) {
+                alert("고객 이름을 입력해주세요.");
+                return;
+            }
+            fetch("/customers", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    name: name,
+                    phoneNumber: phoneNumber
+                })
+            })
+            .then(response => response.text())
+            .then(result => {
+                alert(result);
+
+                document.getElementById("customerName").value = "";
+                document.getElementById("customerPhoneNumber").value = "";
+            })
+            .catch(error => {
+                console.error("고객 등록 실패:",error);
+            });
+        }
+        function createDelivery() {
+            const customerId = document.getElementById("deliveryCustomerId").value;
+            const deliveryAddress = document.getElementById("deliveryAddress").value;
+
+            if (!customerId) {
+                alert("고객 ID를 입력해주세요.");
+                return;
+            }
+
+            if (!deliveryAddress.trim()) {
+                alert("배송 주소를 입력해주세요.");
+                return;
+            }
+            fetch("/deliveries", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    customerId: Number(customerId),
+                    deliveryAddress: deliveryAddress
+                })
+            })
+            .then(response => response.text())
+            .then(result => {
+                alert(result);
+
+                document.getElementById("deliveryAddress").value = "";
+            })
+            .catch(error => {
+                console.error("배송 요청 실패:", error);
+            });
+        }
+        function goToCustomerDeliveryPage() {
+            window.location.href = "/customer-deliveries.html";
+        }
+    </script>
+</body>
+</html>

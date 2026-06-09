@@ -14,7 +14,7 @@ public class Driver {
         return name;
     }
 
-    public String getPhoneNUmber() {
+    public String getPhoneNumber() {
         return phoneNumber;
     }
 
