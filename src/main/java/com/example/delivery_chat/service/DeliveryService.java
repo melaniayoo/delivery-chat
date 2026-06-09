@@ -4,9 +4,11 @@ import com.example.delivery_chat.dto.DeliveryDetailResponse;
 import com.example.delivery_chat.entity.Delivery;
 import com.example.delivery_chat.mapper.DeliveryMapper;
 import com.example.delivery_chat.dto.DeliveryRequest;
+import com.example.delivery_chat.dto.DriverDeliveryCountResponse;
 
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.Random;
 
 @Service
 public class DeliveryService {
@@ -37,10 +39,17 @@ public class DeliveryService {
     }
 
     public void createDelivery(DeliveryRequest request) {
-        String status = request.getStatus();
-        if (status == null || status.isBlank()) {
-            status = "READY";
+        List<DriverDeliveryCountResponse> driverCounts = deliveryMapper.findDriverDeliveryCounts();
+
+        if (driverCounts.isEmpty()) {
+            throw new RuntimeException("No drivers are registered.");
         }
-        deliveryMapper.insertDelivery(request.getCustomerId(), request.getDriverId(), request.getDeliveryAddress(), status);
+
+        Long minimumDeliveryCount = driverCounts.get(0).getDeliveryCount();
+        List<DriverDeliveryCountResponse> leastBusyDrivers = driverCounts.stream().filter(driver -> driver.getDeliveryCount().equals(minimumDeliveryCount)).toList();
+        Random random = new Random();
+        DriverDeliveryCountResponse selectedDriver = leastBusyDrivers.get(random.nextInt(leastBusyDrivers.size()));
+
+        deliveryMapper.insertDelivery(request.getCustomerId(), selectedDriver.getDriverId(), request.getDeliveryAddress(), "READY");
     }
 }

@@ -2,6 +2,7 @@ package com.example.delivery_chat.mapper;
 
 import com.example.delivery_chat.entity.Delivery;
 import com.example.delivery_chat.dto.DeliveryDetailResponse;
+import com.example.delivery_chat.dto.DriverDeliveryCountResponse;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -91,4 +92,15 @@ public interface DeliveryMapper {
                         @Param("driverId") Long driverId,
                         @Param("deliveryAddress") String deliveryAddress,
                         @Param("status") String status);
+
+    @Select("""
+        SELECT
+            dr.id AS driverId,
+            COUNT(d.id) AS deliveryCount
+        FROM drivers dr
+        LEFT JOIN deliveries d ON dr.id = d.driver_id
+        GROUP BY dr.id
+        ORDER BY deliveryCount ASC
+    """)
+    List<DriverDeliveryCountResponse> findDriverDeliveryCounts();
 }
