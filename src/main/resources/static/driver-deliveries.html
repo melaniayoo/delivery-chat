@@ -3,273 +3,279 @@
 <head>
     <meta charset="UTF-8">
     <title>Driver Deliveries</title>
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <h1>배송기사 배송 목록</h1>
+    <div class="container">
+        <div class="page-header">
+            <h1>배송기사 배송 관리</h1>
+            <p>배정된 배송을 조회하고, 고객과 실시간 채팅하며 배송 상태를 변경할 수 있습니다.</p>
 
-    <!-- 배송기사 ID를 입력하고 해당 기사에게 배정된 배송 목록을 조회하는 영역 -->
-    <div>
-        <label>기사 ID:</label>
-        <input type="number" id="driverId" value="1">
-        <button onclick="loadDeliveries()">배송 목록 조회</button>
-    </div>
+            <div class="nav-links">
+                <a href="/admin.html">관리자 페이지</a>
+                <a href="/customer-order.html">고객 주문 페이지</a>
+                <a href="/customer-deliveries.html">고객 배송 조회</a>
+            </div>
+        </div>
 
-    <hr>
+        <div class="card">
+            <h2>배송 목록</h2>
+            <!-- 배송 목록이 JavaScript로 추가될 자리 -->
+            <ul id="deliveryList"></ul>
+        </div>
+        
+        <div class="card">
+            <h2>배송 상세 정보</h2>
+            <!-- 선택한 배송의 상세 정보가 표시될 자리 -->
+            <div id="deliveryDetail"></div>
+        </div>
 
-    <h2>배송 목록</h2>
-    <!-- 배송 목록이 JavaScript로 추가될 자리 -->
-    <ul id="deliveryList"></ul>
+        <div class="card">
+            <h2>메시지 목록</h2>
+            <!-- 선택한 배송의 메시지 목록이 표시될 자리 -->
+            <ul id="messageList"></ul>
+        </div>
 
-    <hr>
+        
+        <div class="card">
+            <h2>배송 상태 변경</h2>
+            <div>
+                <!-- 선택한 배송의 상태를 변경할 select box -->
+                <select id="deliveryStatus">
+                    <option value="READY">READY</option>
+                    <option value="OUT_FOR_DELIVERY">OUT_FOR_DELIVERY</option>
+                    <option value="DELIVERED">DELIVERED</option>
+                    <option value="FAILED">FAILED</option>
+                </select>
 
-    <h2>배송 상세 정보</h2>
-    <!-- 선택한 배송의 상세 정보가 표시될 자리 -->
-    <div id="deliveryDetail"></div>
+                <button onclick="updateDeliveryStatus()">상태변경</button>
+            </div>
+        </div>
 
-    <hr>
+        <div class="card">
+            <h2>메시지 보내기</h2>
+            <div>
+                <!-- 현재 선택된 배송 ID를 저장하는 hidden input -->
+                <input type="hidden" id="selectedDeliveryId">
 
-    <h2>메시지 목록</h2>
-    <!-- 선택한 배송의 메시지 목록이 표시될 자리 -->
-    <ul id="messageList"></ul>
+                <br><br>
 
-    <hr>
+                <!-- 보낼 메시지 내용 입력 -->
+                <input type="text" id="messageContent" placeholder="메시지를 입력하세요" style="width: 300px;">
+                <button onclick="sendMessage()">메시지 보내기</button>
+            </div>
+        </div>
 
-    <h2>배송 상태 변경</h2>
-    <div>
-        <!-- 선택한 배송의 상태를 변경할 select box -->
-        <select id="deliveryStatus">
-            <option value="READY">READY</option>
-            <option value="OUT_FOR_DELIVERY">OUT_FOR_DELIVERY</option>
-            <option value="DELIVERED">DELIVERED</option>
-            <option value="FAILED">FAILED</option>
-        </select>
+        <!-- SockJS와 STOMP 라이브러리: WebSocket 채팅에 사용 -->
+        <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 
-        <button onclick="updateDeliveryStatus()">상태변경</button>
-    </div>
+        <script>
+            // WebSocket/STOMP 연결 객체
+            let stompClient = null;
+            // 현재 구독 중인 topic 정보
+            let currentSubscription = null;
+            // 현재 선택된 배송 ID
+            let currentDeliveryId = null;
 
-    <hr>
+            // 기사 ID를 기준으로 배송 목록을 조회하는 함수
+            function loadDeliveries() {
+                const driverId = document.getElementById("driverId").value;
 
-    <h2>메시지 보내기</h2>
-    <div>
-        <!-- 현재 선택된 배송 ID를 저장하는 hidden input -->
-        <input type="hidden" id="selectedDeliveryId">
+                // REST API로 해당 기사에게 배정된 배송 목록 조회
+                fetch(`/drivers/${driverId}/deliveries`)
+                    .then(response => response.json())
+                    .then(deliveries => {
+                        const deliveryList = document.getElementById("deliveryList");
+                        // 기존 목록 초기화
+                        deliveryList.innerHTML = "";
 
-        <br><br>
+                        // 배송 목록을 화면에 하나씩 추가
+                        deliveries.forEach(delivery => {
+                            const li = document.createElement("li");
 
-        <!-- 보낼 메시지 내용 입력 -->
-        <input type="text" id="messageContent" placeholder="메시지를 입력하세요" style="width: 300px;">
-        <button onclick="sendMessage()">메시지 보내기</button>
-    </div>
-
-    <!-- SockJS와 STOMP 라이브러리: WebSocket 채팅에 사용 -->
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-
-    <script>
-        // WebSocket/STOMP 연결 객체
-        let stompClient = null;
-        // 현재 구독 중인 topic 정보
-        let currentSubscription = null;
-        // 현재 선택된 배송 ID
-        let currentDeliveryId = null;
-
-        // 기사 ID를 기준으로 배송 목록을 조회하는 함수
-        function loadDeliveries() {
-            const driverId = document.getElementById("driverId").value;
-
-            // REST API로 해당 기사에게 배정된 배송 목록 조회
-            fetch(`/drivers/${driverId}/deliveries`)
-                .then(response => response.json())
-                .then(deliveries => {
-                    const deliveryList = document.getElementById("deliveryList");
-                    // 기존 목록 초기화
-                    deliveryList.innerHTML = "";
-
-                    // 배송 목록을 화면에 하나씩 추가
-                    deliveries.forEach(delivery => {
-                        const li = document.createElement("li");
-
-                        li.innerHTML = `
-                            배송 ID: ${delivery.id} / 
-                            주소: ${delivery.deliveryAddress} /
-                            상태: ${delivery.status}
-                            <button onclick="loadDeliveryDetail(${delivery.id})">상세 보기</button>
-                            `;
-                            deliveryList.appendChild(li);
+                            li.innerHTML = `
+                                배송 ID: ${delivery.id} / 
+                                주소: ${delivery.deliveryAddress} /
+                                상태: <span class="status">${delivery.status}</span>
+                                <button onclick="loadDeliveryDetail(${delivery.id})">상세 보기</button>
+                                `;
+                                deliveryList.appendChild(li);
+                        });
                     });
-                });
-        }
-        // 특정 배송의 상세 정보와 메시지 목록을 조회하는 함수
-        function loadDeliveryDetail(deliveryId) {
-            // 선택한 배송 ID 저장
-            document.getElementById("selectedDeliveryId").value = deliveryId;
+            }
+            // 특정 배송의 상세 정보와 메시지 목록을 조회하는 함수
+            function loadDeliveryDetail(deliveryId) {
+                // 선택한 배송 ID 저장
+                document.getElementById("selectedDeliveryId").value = deliveryId;
 
-            // 해당 배송 채팅방 WebSocket 연결/구독
-            connectWebSocket(deliveryId);
+                // 해당 배송 채팅방 WebSocket 연결/구독
+                connectWebSocket(deliveryId);
 
-            // REST API로 배송 상세 정보 조회
-            fetch(`/deliveries/${deliveryId}`)
-                .then(response => response.json())
-                .then(delivery => {
-                    const detailDiv = document.getElementById("deliveryDetail");
+                // REST API로 배송 상세 정보 조회
+                fetch(`/deliveries/${deliveryId}`)
+                    .then(response => response.json())
+                    .then(delivery => {
+                        const detailDiv = document.getElementById("deliveryDetail");
 
-                    // 배송 상세 정보를 화면에 표시
-                    detailDiv.innerHTML = `
-                        <p><strong>배송 ID:</strong> ${delivery.deliveryId}</p>
-                        <p><strong>고객명:</strong> ${delivery.customerName}</p>
-                        <p><strong>고객 전화번호:</strong> ${delivery.customerPhoneNumber}</p>
-                        <p><strong>기사명:</strong> ${delivery.driverName}</p>
-                        <p><strong>기사 전화번호:</strong> ${delivery.driverPhoneNumber}</p>
-                        <p><strong>배송 주소:</strong> ${delivery.deliveryAddress}</p>
-                        <p><strong>배송 상태:</strong> ${delivery.status}</p>
-                    `;
-                    // 상태 변경 select box를 현재 배송 상태로 맞춤
-                    document.getElementById("deliveryStatus").value = delivery.status;
-                })
-                .catch(error => {
-                    console.error("배송 상세 조회 실패:", error);
-                });
-            // 해당 배송의 메시지 목록 조회
-            loadMessages(deliveryId);
-        }
-        // 특정 배송 ID에 해당하는 메시지 목록 조회
-        function loadMessages(deliveryId) {
-            fetch(`/deliveries/${deliveryId}/messages`) 
-                .then(response => response.json())
-                .then(messages => {
-                    const messageList = document.getElementById("messageList");
-                    // 기존 메시지 목록 초기화
-                    messageList.innerHTML = "";
-
-                    // 메시지 목록을 화면에 하나씩 추가
-                    messages.forEach(message => {
-                        const li = document.createElement("li");
-
-                        li.innerHTML = `
-                            [${message.senderType}]
-                            ${message.content}
-                            <small>${message.createdAt}</small>
+                        // 배송 상세 정보를 화면에 표시
+                        detailDiv.innerHTML = `
+                            <p><strong>배송 ID:</strong> ${delivery.deliveryId}</p>
+                            <p><strong>고객명:</strong> ${delivery.customerName}</p>
+                            <p><strong>고객 전화번호:</strong> ${delivery.customerPhoneNumber}</p>
+                            <p><strong>기사명:</strong> ${delivery.driverName}</p>
+                            <p><strong>기사 전화번호:</strong> ${delivery.driverPhoneNumber}</p>
+                            <p><strong>배송 주소:</strong> ${delivery.deliveryAddress}</p>
+                            <p><strong>배송 상태:</strong> ${delivery.status}</p>
                         `;
-                        messageList.appendChild(li);
+                        // 상태 변경 select box를 현재 배송 상태로 맞춤
+                        document.getElementById("deliveryStatus").value = delivery.status;
+                    })
+                    .catch(error => {
+                        console.error("배송 상세 조회 실패:", error);
                     });
+                // 해당 배송의 메시지 목록 조회
+                loadMessages(deliveryId);
+            }
+            // 특정 배송 ID에 해당하는 메시지 목록 조회
+            function loadMessages(deliveryId) {
+                fetch(`/deliveries/${deliveryId}/messages`) 
+                    .then(response => response.json())
+                    .then(messages => {
+                        const messageList = document.getElementById("messageList");
+                        // 기존 메시지 목록 초기화
+                        messageList.innerHTML = "";
+
+                        // 메시지 목록을 화면에 하나씩 추가
+                        messages.forEach(message => {
+                            const li = document.createElement("li");
+
+                            li.innerHTML = `
+                                <span class="message-sender">[${message.senderType}]</span>
+                                ${message.content}
+                                <span class="message-time">${message.createdAt}</span>
+                            `;
+                            messageList.appendChild(li);
+                        });
+                    })
+                    .catch(error => {
+                        console.error("메시지 조회 실패:", error);
+                    });
+            }
+            // WebSocket으로 메시지를 서버에 전송하는 함수
+            function sendMessage() {
+                const deliveryId = document.getElementById("selectedDeliveryId").value;
+                const senderType = "DRIVER";
+                const senderId = document.getElementById("driverId").value;
+                const content = document.getElementById("messageContent").value;
+
+                // 배송을 선택하지 않은 경우 메시지 전송 방지
+                if (!deliveryId) {
+                    alert("먼저 배송을 선택해주세요.");
+                    return;
+                }
+                // 공백만 입력한 경우 메시지 전송 방지
+                if (!content.trim()) {
+                    alert("메세지를 입력해주세요.");
+                    return;
+                }
+                // WebSocket 연결이 안 된 경우 메시지 전송 방지
+                if (!stompClient || !stompClient.connected) {
+                    alert("WebSocket이 아직 연결되지 않았습니다. 상세 보기를 다시 눌러주세요.");
+                    return;
+                }
+                // 서버로 보낼 채팅 메시지 객체 생성
+                const chatMessage = {
+                    deliveryId: Number(deliveryId),
+                    senderType: senderType,
+                    senderId: Number(senderId),
+                    content: content
+                };
+                console.log("Sending WebSocket message:", chatMessage);
+                // /app/chat.send 주소로 메시지 전송
+                stompClient.send("/app/chat.send", {}, JSON.stringify(chatMessage));
+                console.log("WebSocket message sent");
+                // 메시지 전송 후 입력창 비우기
+                document.getElementById("messageContent").value="";
+            }
+            // 선택한 배송의 상태를 변경하는 함수
+            function updateDeliveryStatus() {
+                const deliveryId = document.getElementById("selectedDeliveryId").value;
+                const status = document.getElementById("deliveryStatus").value;
+                // 배송을 선택하지 않은 경우 상태 변경 방지
+                if(!deliveryId) {
+                    alert("먼저 배송을 선택해주세요.");
+                    return;
+                }
+                // REST API로 배송 상태 변경 요청
+                fetch(`/deliveries/${deliveryId}/status`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        status: status
+                    })
+                })
+                .then(response => response.text())
+                .then(result => {
+                    console.log(result);
+
+                    alert("배송 상태가 변경되었습니다.");
+
+                    // 상세 정보와 배송 목록을 다시 불러와 최신 상태 반영
+                    loadDeliveryDetail(deliveryId);
+                    loadDeliveries();
                 })
                 .catch(error => {
-                    console.error("메시지 조회 실패:", error);
+                    console.error("배송 상태 변경 실패:", error);
                 });
-        }
-        // WebSocket으로 메시지를 서버에 전송하는 함수
-        function sendMessage() {
-            const deliveryId = document.getElementById("selectedDeliveryId").value;
-            const senderType = "DRIVER";
-            const senderId = document.getElementById("driverId").value;
-            const content = document.getElementById("messageContent").value;
-
-            // 배송을 선택하지 않은 경우 메시지 전송 방지
-            if (!deliveryId) {
-                alert("먼저 배송을 선택해주세요.");
-                return;
             }
-            // 공백만 입력한 경우 메시지 전송 방지
-            if (!content.trim()) {
-                alert("메세지를 입력해주세요.");
-                return;
-            }
-            // WebSocket 연결이 안 된 경우 메시지 전송 방지
-            if (!stompClient || !stompClient.connected) {
-                alert("WebSocket이 아직 연결되지 않았습니다. 상세 보기를 다시 눌러주세요.");
-                return;
-            }
-            // 서버로 보낼 채팅 메시지 객체 생성
-            const chatMessage = {
-                deliveryId: Number(deliveryId),
-                senderType: senderType,
-                senderId: Number(senderId),
-                content: content
-            };
-            console.log("Sending WebSocket message:", chatMessage);
-            // /app/chat.send 주소로 메시지 전송
-            stompClient.send("/app/chat.send", {}, JSON.stringify(chatMessage));
-            console.log("WebSocket message sent");
-            // 메시지 전송 후 입력창 비우기
-            document.getElementById("messageContent").value="";
-        }
-        // 선택한 배송의 상태를 변경하는 함수
-        function updateDeliveryStatus() {
-            const deliveryId = document.getElementById("selectedDeliveryId").value;
-            const status = document.getElementById("deliveryStatus").value;
-            // 배송을 선택하지 않은 경우 상태 변경 방지
-            if(!deliveryId) {
-                alert("먼저 배송을 선택해주세요.");
-                return;
-            }
-            // REST API로 배송 상태 변경 요청
-            fetch(`/deliveries/${deliveryId}/status`, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    status: status
-                })
-            })
-            .then(response => response.text())
-            .then(result => {
-                console.log(result);
+            // 특정 배송 채팅방에 WebSocket으로 연결하고 topic을 구독하는 함수
+            function connectWebSocket(deliveryId) {
+                currentDeliveryId = deliveryId;
 
-                alert("배송 상태가 변경되었습니다.");
+                // Spring Boot WebSocket endpoint인 /ws로 연결
+                const socket = new SockJS('/ws');
+                stompClient = Stomp.over(socket);
 
-                // 상세 정보와 배송 목록을 다시 불러와 최신 상태 반영
-                loadDeliveryDetail(deliveryId);
-                loadDeliveries();
-            })
-            .catch(error => {
-                console.error("배송 상태 변경 실패:", error);
-            });
-        }
-        // 특정 배송 채팅방에 WebSocket으로 연결하고 topic을 구독하는 함수
-        function connectWebSocket(deliveryId) {
-            currentDeliveryId = deliveryId;
+                // WebSocket 연결 시작
+                stompClient.connect({}, function () {
+                    console.log("WebSocket connected");
 
-            // Spring Boot WebSocket endpoint인 /ws로 연결
-            const socket = new SockJS('/ws');
-            stompClient = Stomp.over(socket);
+                    // 기존 구독이 있으면 해제
+                    if (currentSubscription) {
+                        currentSubscription.unsubscribe();
+                    }
 
-            // WebSocket 연결 시작
-            stompClient.connect({}, function () {
-                console.log("WebSocket connected");
+                    const topic = `/topic/deliveries/${deliveryId}`;
+                    console.log("Subscribing to:", topic);
 
-                // 기존 구독이 있으면 해제
-                if (currentSubscription) {
-                    currentSubscription.unsubscribe();
-                }
+                    // 선택한 배송 ID의 topic 구독
+                    // 서버가 이 topic으로 메시지를 보내면 실시간으로 받음
+                    currentSubscription = stompClient.subscribe(topic, function (message) {
+                        console.log("Received WebSocket message:", message.body);
 
-                const topic = `/topic/deliveries/${deliveryId}`;
-                console.log("Subscribing to:", topic);
-
-                // 선택한 배송 ID의 topic 구독
-                // 서버가 이 topic으로 메시지를 보내면 실시간으로 받음
-                currentSubscription = stompClient.subscribe(topic, function (message) {
-                    console.log("Received WebSocket message:", message.body);
-
-                    const chatMessage = JSON.parse(message.body);
-                    addMessageToScreen(chatMessage);
+                        const chatMessage = JSON.parse(message.body);
+                        addMessageToScreen(chatMessage);
+                    });
+                }, function (error) {
+                    console.error("WebSocket connection error:", error);
                 });
-            }, function (error) {
-                console.error("WebSocket connection error:", error);
-            });
-        }
-         // WebSocket으로 받은 메시지를 화면에 추가하는 함수
-        function addMessageToScreen(message) {
-            const messageList = document.getElementById("messageList");
-            const li = document.createElement("li");
+            }
+            // WebSocket으로 받은 메시지를 화면에 추가하는 함수
+            function addMessageToScreen(message) {
+                const messageList = document.getElementById("messageList");
+                const li = document.createElement("li");
 
-            li.innerHTML = `
-                [${message.senderType}]
-                ${message.content}
-                <small>${message.createdAt}</small>
-            `;
-            messageList.appendChild(li);
-        }
-    </script>
+                li.innerHTML = `
+                    <span class="message-sender">[${message.senderType}]</span>
+                    ${message.content}
+                    <span class="message-time">${message.createdAt}</span>
+                `;
+                messageList.appendChild(li);
+            }
+        </script>
+    </div>
 </body>
 </html>
