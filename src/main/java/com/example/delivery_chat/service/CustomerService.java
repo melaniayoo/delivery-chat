@@ -23,6 +23,10 @@ public class CustomerService {
     }
 
     public void createCustomer(CustomerRequest request) {
-        customerMapper.insertCustomer(request.getName(), request.getPhoneNumber());
+        Customer customer = new Customer();
+        customer.setName(request.getName());
+        customer.setPhoneNumber(request.getPhoneNumber());
+
+        customerMapper.insertCustomer(customer);
     }
 }

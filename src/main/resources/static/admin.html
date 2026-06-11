@@ -11,6 +11,14 @@
             <h1>관리자 페이지</h1>
             <p>배송기사 등록 및 전체 고객, 기사, 배송 현황을 확인할 수 있습니다.</p>
 
+            <div class="user-info">
+                로그인 계정: <span id="currentUsername"></span>
+                (<span id="currentRole"></span>)
+                <form action="/logout" method="post" style="display: inline;">
+                    <button type="submit">로그아웃</button>
+                </form>
+            </div>
+
             <div class="nav-links">
                 <a href="/customer-order.html">고객 주문 페이지</a>
                 <a href="/customer-deliveries.html">고객 배송 조회</a>
@@ -48,6 +56,22 @@
         </div>
 
         <script>
+            let currentUser = null;
+            function loadCurrentUser() {
+                return fetch("/auth/me")
+                    .then(response => response.json())
+                    .then(user => {
+                        currentUser = user;
+
+                        document.getElementById("currentUsername").textContent = user.username;
+                        document.getElementById("currentRole").textContent = user.role;
+
+                        return user;
+                    })
+                    .catch(error => {
+                        console.error("현재 사용자 조회 실패:", error);
+                    });
+            }
             function createDriver() {
                 const name = document.getElementById("driverName").value;
                 const phoneNumber = document.getElementById("driverPhoneNumber").value;

@@ -20,6 +20,10 @@ public class DriverService {
     }
 
     public void createDriver(DriverRequest request) {
-        driverMapper.insertDriver(request.getName(), request.getPhoneNumber());
+        Driver driver = new Driver();
+        driver.setName(request.getName());
+        driver.setPhoneNumber(request.getPhoneNumber());
+
+        driverMapper.insertDriver(driver);
     }
 }

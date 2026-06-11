@@ -11,6 +11,14 @@
             <h1>고객 배송 조회</h1>
             <p>내 배송 상태를 확인하고 배송기사와 실시간 채팅할 수 있습니다.</p>
 
+            <div class="user-info">
+                로그인 계정: <span id="currentUsername"></span>
+                (<span id="currentRole"></span>)
+                <form action="/logout" method="post" style="display: inline;">
+                    <button type="submit">로그아웃</button>
+                </form>
+            </div>
+
             <div class="nav-links">
                 <a href="/customer-order.html">고객 주문 페이지</a>
                 <a href="/driver-deliveries.html">배송기사 페이지</a>
@@ -61,10 +69,30 @@
             let currentSubscription = null;
             // 현재 선택된 배송 ID
             let currentDeliveryId = null;
+            let currentUser = null;
+            function loadCurrentUser() {
+                return fetch("/auth/me")
+                    .then(response => response.json())
+                    .then(user => {
+                        currentUser = user;
 
+                        document.getElementById("currentUsername").textContent = user.username;
+                        document.getElementById("currentRole").textContent = user.role;
+
+                        return user;
+                    })
+                    .catch(error => {
+                        console.error("현재 사용자 조회 실패:", error);
+                    });
+            }
             // 기사 ID를 기준으로 배송 목록을 조회하는 함수
             function loadDeliveries() {
-                const customerId = document.getElementById("customerId").value;
+                const customerId = currentUser.customerId;
+
+                if (!customerId) {
+                    alert("고객 계정으로 로그인해야 합니다.");
+                    return;
+                }
 
                 // REST API로 해당 기사에게 배정된 배송 목록 조회
                 fetch(`/customers/${customerId}/deliveries`)
@@ -86,6 +114,9 @@
                                 `;
                                 deliveryList.appendChild(li);
                         });
+                    })
+                    .catch(error => {
+                        console.error("배송 목록 조회 실패:", error);
                     });
             }
             // 특정 배송의 상세 정보와 메시지 목록을 조회하는 함수
@@ -149,7 +180,7 @@
             // WebSocket으로 메시지를 서버에 전송하는 함수
             function sendMessage() {
                 const deliveryId = document.getElementById("selectedDeliveryId").value;
-                const customerId = document.getElementById("customerId").value;
+                const customerId = currentUser.customerId;
                 const content = document.getElementById("messageContent").value;
 
                 // 배송을 선택하지 않은 경우 메시지 전송 방지
@@ -171,7 +202,7 @@
                 const chatMessage = {
                     deliveryId: Number(deliveryId),
                     senderType: "CUSTOMER",
-                    senderId: Number(customerId),
+                    senderId: Number(currentUser.customerId),
                     content: content
                 };
                 console.log("Sending WebSocket message:", chatMessage);
@@ -225,6 +256,11 @@
                 `;
                 messageList.appendChild(li);
             }
+            window.onload = function () {
+                loadCurrentUser().then(() => {
+                    loadDeliveries();
+                });
+            };
         </script>
     </div>
 </body>

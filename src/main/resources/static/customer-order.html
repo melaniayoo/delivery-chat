@@ -11,6 +11,14 @@
             <h1>고객 주문 페이지</h1>
             <p>고객 등록 후 배송 요청을 생성할 수 있습니다. 배송기사는 자동 배정됩니다.</p>
 
+            <div class="user-info">
+                로그인 계정: <span id="currentUsername"></span>
+                (<span id="currentRole"></span>)
+                <form action="/logout" method="post" style="display: inline;">
+                    <button type="submit">로그아웃</button>
+                </form>
+            </div>
+
             <div class="nav-links">
                 <a href="/customer-deliveries.html">내 배송 조회</a>
                 <a href="/driver-deliveries.html">배송기사 페이지</a>
@@ -34,11 +42,6 @@
         <div class="card">
             <h2>배송 요청 생성</h2>
             <div>
-                <label>고객 ID:</label>
-                <input type="number" id="deliveryCustomerId" placeholder="예: 1">
-
-                <br><br>
-
                 <label>배송 주소:</label>
                 <input type="text" id="deliveryAddress" placeholder="예: 서울시 강남구 테헤란로 123" style="width: 350px;">
 
@@ -52,6 +55,22 @@
         <button onclick="goToCustomerDeliveryPage()">고객 배송 조회 페이지로 이동</button>
 
         <script>
+            let currentUser = null;
+            function loadCurrentUser() {
+                return fetch("/auth/me")
+                    .then(response => response.json())
+                    .then(user => {
+                        currentUser = user;
+
+                        document.getElementById("currentUsername").textContent = user.username;
+                        document.getElementById("currentRole").textContent = user.role;
+
+                        return user;
+                    })
+                    .catch(error => {
+                        console.error("현재 사용자 조회 실패:", error);
+                    });
+            }
             function createCustomer() {
                 const name = document.getElementById("customerName").value;
                 const phoneNumber = document.getElementById("customerPhoneNumber").value;
@@ -82,11 +101,11 @@
                 });
             }
             function createDelivery() {
-                const customerId = document.getElementById("deliveryCustomerId").value;
+                const customerId = currentUser.customerId;
                 const deliveryAddress = document.getElementById("deliveryAddress").value;
 
                 if (!customerId) {
-                    alert("고객 ID를 입력해주세요.");
+                    alert("고객 계정으로 로그인해야 합니다.");
                     return;
                 }
 
@@ -107,16 +126,18 @@
                 .then(response => response.text())
                 .then(result => {
                     alert(result);
-
                     document.getElementById("deliveryAddress").value = "";
                 })
                 .catch(error => {
-                    console.error("배송 요청 실패:", error);
+                    console.error("배송 요청 생성 실패:", error);
                 });
             }
             function goToCustomerDeliveryPage() {
                 window.location.href = "/customer-deliveries.html";
             }
+            window.onload = function () {
+                loadCurrentUser();
+            };
         </script>
     </div>
 </body>

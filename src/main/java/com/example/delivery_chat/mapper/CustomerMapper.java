@@ -4,7 +4,7 @@ import com.example.delivery_chat.entity.Customer;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Options;
 
 import java.util.List;
 
@@ -19,6 +19,6 @@ public interface CustomerMapper {
         INSERT INTO customers (name, phone_number)
         VALUES (#{name}, #{phoneNumber})
     """)
-    void insertCustomer(@Param("name") String name,
-                        @Param("phoneNumber") String phoneNumber);
+    @Options (useGeneratedKeys = true, keyProperty = "id", keyColumn = "id")
+    void insertCustomer(Customer customer);
 } 

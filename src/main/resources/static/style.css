@@ -140,3 +140,20 @@ li {
 .nav-links a:hover {
     text-decoration: underline;
 }
+
+.user-info {
+    margin-top: 14px;
+    padding: 10px 12px;
+    background-color: #f9fafb;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+}
+
+.user-info button {
+    margin-left: 12px;
+    background-color: #6b7280;
+}
+
+.user-info button:hover {
+    background-color: #4b5563;
+}
