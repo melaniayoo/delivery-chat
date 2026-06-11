@@ -19,24 +19,33 @@
                 </form>
             </div>
 
-            <div class="nav-links">
-                <a href="/customer-order.html">고객 주문 페이지</a>
-                <a href="/customer-deliveries.html">고객 배송 조회</a>
-                <a href="/driver-deliveries.html">배송기사 페이지</a>
-            </div>
+            <div class="nav-links" id="navLinks"></div>
         </div>
 
         <div class="card">
             <h2>배송기사 생성</h2>
-            <div>
+            
+            <div class="form-row">
+                <label>Username:</label>
+                <input type="text" id="driverUsername" placeholder="예: driverkim">
+            </div>
+
+            <div class="form-row">
+                <label>Password:</label>
+                <input type="password" id="driverPassword" placeholder="비밀번호">
+            </div>
+
+            <div class="form-row">
                 <label>기사 이름:</label>
                 <input type="text" id="driverName" placeholder="예: 김기사">
+            </div>
 
+            <div class="form-row">
                 <label>전화번호:</label>
                 <input type="text" id="driverPhoneNumber" placeholder="예: 010-1111-1111">
-
-                <button onclick="createDriver()">기사 생성</button>
             </div>
+
+            <button onclick="createDriver()">기사 생성</button>
         </div>
 
         <h3>배송기사 목록</h3>
@@ -66,6 +75,8 @@
                         document.getElementById("currentUsername").textContent = user.username;
                         document.getElementById("currentRole").textContent = user.role;
 
+                        renderNavigationByRole(user);
+
                         return user;
                     })
                     .catch(error => {
@@ -73,11 +84,13 @@
                     });
             }
             function createDriver() {
+                const username = document.getElementById("driverUsername").value;
+                const password = document.getElementById("driverPassword").value;
                 const name = document.getElementById("driverName").value;
                 const phoneNumber = document.getElementById("driverPhoneNumber").value;
 
-                if (!name.trim()) {
-                    alert("기사 이름을 입력해주세요.");
+                if (!name.trim() || !password.trim() || !name.trim()) {
+                    alert("Username, password, 기사 이름은 필수입니다.");
                     return;
                 }
 
@@ -87,14 +100,23 @@
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
+                        username: username,
+                        password: password,
                         name: name,
                         phoneNumber: phoneNumber
                     })
                 })
-                .then(response => response.text())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("기사 생성 실패");
+                    }
+                    return response.text();
+                })
                 .then(result => {
-                    alert(result);
+                    alert("배송기사 계정이 생성되었습니다.");
 
+                    document.getElementById("driverUsername").value = "";
+                    document.getElementById("driverPassword").value = "";
                     document.getElementById("driverName").value = "";
                     document.getElementById("driverPhoneNumber").value = "";
 
@@ -102,6 +124,7 @@
                 })
                 .catch(error => {
                     console.error("기사 생성 실패:", error);
+                    alert("기사 생성에 실패했습니다. username이 이미 사용 중일 수 있습니다.");
                 });
             }
             function loadDrivers() {
@@ -170,6 +193,33 @@
                     .catch(error => {
                         console.error("배송 목록 조회 실패:", error)
                     });
+            }
+            function renderNavigationByRole(user) {
+                const navLinks = document.getElementById("navLinks");
+
+                if (!navLinks) {
+                    return;
+                }
+
+                navLinks.innerHTML = "";
+
+                if (user.role === "ADMIN") {
+                    navLinks.innerHTML = `
+                        <a href="/admin.html">관리자 페이지</a>
+                        <a href="/customer-order.html">고객 주문 페이지</a>
+                        <a href="/customer-deliveries.html">고객 배송 조회</a>
+                        <a href="/driver-deliveries.html">배송기사 페이지</a>
+                    `;
+                } else if (user.role === "CUSTOMER") {
+                    navLinks.innerHTML = `
+                        <a href="/customer-order.html">고객 주문 페이지</a>
+                        <a href="/customer-deliveries.html">내 배송 조회</a>
+                    `;
+                } else if (user.role === "DRIVER") {
+                    navLinks.innerHTML = `
+                        <a href="/driver-deliveries.html">내 배송 관리</a>
+                    `;
+                }
             }
             window.onload = function () {
                 loadDrivers();

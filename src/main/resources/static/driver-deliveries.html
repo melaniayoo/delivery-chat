@@ -19,11 +19,7 @@
                 </form>
             </div>
 
-            <div class="nav-links">
-                <a href="/admin.html">관리자 페이지</a>
-                <a href="/customer-order.html">고객 주문 페이지</a>
-                <a href="/customer-deliveries.html">고객 배송 조회</a>
-            </div>
+            <div class="nav-links" id="navLinks"></div>
         </div>
 
         <div class="card">
@@ -95,6 +91,8 @@
 
                         document.getElementById("currentUsername").textContent = user.username;
                         document.getElementById("currentRole").textContent = user.role;
+
+                        renderNavigationByRole(user);
 
                         return user;
                     })
@@ -197,8 +195,6 @@
             // WebSocket으로 메시지를 서버에 전송하는 함수
             function sendMessage() {
                 const deliveryId = document.getElementById("selectedDeliveryId").value;
-                const senderType = "DRIVER";
-                const senderId = document.getElementById("driverId").value;
                 const content = document.getElementById("messageContent").value;
 
                 // 배송을 선택하지 않은 경우 메시지 전송 방지
@@ -211,6 +207,10 @@
                     alert("메세지를 입력해주세요.");
                     return;
                 }
+                if (!currentUser || !currentUser.driverId) {
+                    alert("배송기사 계정으로 로그인해야 합니다.");
+                    return;
+                }
                 // WebSocket 연결이 안 된 경우 메시지 전송 방지
                 if (!stompClient || !stompClient.connected) {
                     alert("WebSocket이 아직 연결되지 않았습니다. 상세 보기를 다시 눌러주세요.");
@@ -219,14 +219,13 @@
                 // 서버로 보낼 채팅 메시지 객체 생성
                 const chatMessage = {
                     deliveryId: Number(deliveryId),
-                    senderType: senderType,
+                    senderType: "DRIVER",
                     senderId: Number(currentUser.driverId),
                     content: content
                 };
                 console.log("Sending WebSocket message:", chatMessage);
                 // /app/chat.send 주소로 메시지 전송
                 stompClient.send("/app/chat.send", {}, JSON.stringify(chatMessage));
-                console.log("WebSocket message sent");
                 // 메시지 전송 후 입력창 비우기
                 document.getElementById("messageContent").value="";
             }
@@ -306,6 +305,33 @@
                     <span class="message-time">${message.createdAt}</span>
                 `;
                 messageList.appendChild(li);
+            }
+            function renderNavigationByRole(user) {
+                const navLinks = document.getElementById("navLinks");
+
+                if (!navLinks) {
+                    return;
+                }
+
+                navLinks.innerHTML = "";
+
+                if (user.role === "ADMIN") {
+                    navLinks.innerHTML = `
+                        <a href="/admin.html">관리자 페이지</a>
+                        <a href="/customer-order.html">고객 주문 페이지</a>
+                        <a href="/customer-deliveries.html">고객 배송 조회</a>
+                        <a href="/driver-deliveries.html">배송기사 페이지</a>
+                    `;
+                } else if (user.role === "CUSTOMER") {
+                    navLinks.innerHTML = `
+                        <a href="/customer-order.html">고객 주문 페이지</a>
+                        <a href="/customer-deliveries.html">내 배송 조회</a>
+                    `;
+                } else if (user.role === "DRIVER") {
+                    navLinks.innerHTML = `
+                        <a href="/driver-deliveries.html">내 배송 관리</a>
+                    `;
+                }
             }
             window.onload = function () {
                 loadCurrentUser().then(() => {

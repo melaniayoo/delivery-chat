@@ -9,7 +9,7 @@
     <div class="container">
         <div class="page-header">
             <h1>고객 주문 페이지</h1>
-            <p>고객 등록 후 배송 요청을 생성할 수 있습니다. 배송기사는 자동 배정됩니다.</p>
+            <p>로그인한 고객 계정으로 배송 요청을 생성할 수 있습니다. 배송기사는 자동 배정됩니다.</p>
 
             <div class="user-info">
                 로그인 계정: <span id="currentUsername"></span>
@@ -19,24 +19,7 @@
                 </form>
             </div>
 
-            <div class="nav-links">
-                <a href="/customer-deliveries.html">내 배송 조회</a>
-                <a href="/driver-deliveries.html">배송기사 페이지</a>
-                <a href="/admin.html">관리자 페이지</a>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>고객 등록</h2>
-            <div>
-                <label>고객 이름:</label>
-                <input type="text" id="customerName" placeholder="예: 홍길동">
-
-                <label>전화번호:</label>
-                <input type="text" id="customerPhoneNumber" placeholder="예: 010-0000-0000">
-
-                <button onclick="createCustomer()">고객 등록</button>
-            </div>
+            <div class="nav-links" id="navLinks"></div>
         </div>
 
         <div class="card">
@@ -64,41 +47,14 @@
 
                         document.getElementById("currentUsername").textContent = user.username;
                         document.getElementById("currentRole").textContent = user.role;
+                        
+                        renderNavigationByRole(user);
 
                         return user;
                     })
                     .catch(error => {
                         console.error("현재 사용자 조회 실패:", error);
                     });
-            }
-            function createCustomer() {
-                const name = document.getElementById("customerName").value;
-                const phoneNumber = document.getElementById("customerPhoneNumber").value;
-
-                if (!name.trim()) {
-                    alert("고객 이름을 입력해주세요.");
-                    return;
-                }
-                fetch("/customers", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        name: name,
-                        phoneNumber: phoneNumber
-                    })
-                })
-                .then(response => response.text())
-                .then(result => {
-                    alert(result);
-
-                    document.getElementById("customerName").value = "";
-                    document.getElementById("customerPhoneNumber").value = "";
-                })
-                .catch(error => {
-                    console.error("고객 등록 실패:",error);
-                });
             }
             function createDelivery() {
                 const customerId = currentUser.customerId;
@@ -134,6 +90,33 @@
             }
             function goToCustomerDeliveryPage() {
                 window.location.href = "/customer-deliveries.html";
+            }
+            function renderNavigationByRole(user) {
+                const navLinks = document.getElementById("navLinks");
+
+                if (!navLinks) {
+                    return;
+                }
+
+                navLinks.innerHTML = "";
+
+                if (user.role === "ADMIN") {
+                    navLinks.innerHTML = `
+                        <a href="/admin.html">관리자 페이지</a>
+                        <a href="/customer-order.html">고객 주문 페이지</a>
+                        <a href="/customer-deliveries.html">고객 배송 조회</a>
+                        <a href="/driver-deliveries.html">배송기사 페이지</a>
+                    `;
+                } else if (user.role === "CUSTOMER") {
+                    navLinks.innerHTML = `
+                        <a href="/customer-order.html">고객 주문 페이지</a>
+                        <a href="/customer-deliveries.html">내 배송 조회</a>
+                    `;
+                } else if (user.role === "DRIVER") {
+                    navLinks.innerHTML = `
+                        <a href="/driver-deliveries.html">내 배송 관리</a>
+                    `;
+                }
             }
             window.onload = function () {
                 loadCurrentUser();

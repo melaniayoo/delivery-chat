@@ -10,6 +10,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.http.HttpMethod;
 
 // Configures authentication and authorization for the delivery chat system
 @Configuration
@@ -48,22 +50,23 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/style.css").permitAll()
                 .requestMatchers("/register.html").permitAll()
-                .requestMatchers("/auth/register/**").permitAll()
+                .requestMatchers("/auth/register/customer").permitAll()
                 .requestMatchers("/admin.html").hasRole("ADMIN")
                 .requestMatchers("/driver-deliveries.html").hasAnyRole("DRIVER", "ADMIN")
                 .requestMatchers("/customer-order.html", "/customer-deliveries.html").hasAnyRole("CUSTOMER", "ADMIN")
                 // 고객 관련 API는 CUSTOMER 또는 ADMIN만 접근 가능
                 .requestMatchers("/customers/**").hasAnyRole("CUSTOMER", "ADMIN")
-                .requestMatchers("/drivers/**").hasAnyRole("DRIVER", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/drivers").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/drivers/**").hasAnyRole("DRIVER", "ADMIN")
                 // 배송 관련 API는 로그인한 사용자라면 접근 가능
                 .requestMatchers("/deliveries/**").authenticated()
+                .requestMatchers("/ws/**").authenticated()
                 // 위에 적히지 않은 모든 요청은 로그인 필요
                 .anyRequest().authenticated()
             )
             // 기본 form login 사용
             .formLogin(form -> form
-                // 로그인 성공 후 이동할 기본 페이지, false: 사용자가 원래 접근하려던 URL이 있으면 그 URL로 이동할 수 있음
-                .defaultSuccessUrl("/customer-order.html", false)
+                .successHandler(authenticationSuccessHandler())
                 .permitAll()
             )
             // 로그아웃 설정
@@ -75,5 +78,23 @@ public class SecurityConfig {
             );
         // 위 설정을 기반으로 SecurityFilterChain 생성
         return http.build();
+    }
+    @Bean
+    public AuthenticationSuccessHandler authenticationSuccessHandler() {
+        return (request, response, authentication) -> {
+            boolean isAdmin = authentication.getAuthorities().stream().anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+            boolean isDriver = authentication.getAuthorities().stream().anyMatch(authority -> authority.getAuthority().equals("ROLE_DRIVER"));
+            boolean isCustomer = authentication.getAuthorities().stream().anyMatch(authority -> authority.getAuthority().equals("ROLE_CUSTOMER"));
+
+            if (isAdmin) {
+                response.sendRedirect("/admin.html");
+            } else if (isDriver) {
+                response.sendRedirect("/driver-deliveries.html");
+            } else if (isCustomer) {
+                response.sendRedirect("/customer-order.html");
+            } else {
+                response.sendRedirect("/login");
+            }
+        };
     }
 }
