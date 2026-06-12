@@ -13,7 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.http.HttpMethod;
 
-// Configures authentication and authorization for the delivery chat system
+// 배송 채팅 시스템의 로그인, 비밀번호 암호화, URL 접근 권한을 설정하는 클래스
 @Configuration
 public class SecurityConfig {
     // 비밀번호 암호화에 사용할 PasswordEncoder Bean 등록, 회원가입 시 비밀번호를 BCrypt 방식으로 암호화해서 DB에 저장
@@ -49,11 +49,11 @@ public class SecurityConfig {
             // URL별 접근 권한 설정
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/style.css").permitAll()
-                .requestMatchers("/register.html").permitAll()
+                .requestMatchers("/login.html").permitAll()
                 .requestMatchers("/auth/register/customer").permitAll()
                 .requestMatchers("/admin.html").hasRole("ADMIN")
-                .requestMatchers("/driver-deliveries.html").hasAnyRole("DRIVER", "ADMIN")
-                .requestMatchers("/customer-order.html", "/customer-deliveries.html").hasAnyRole("CUSTOMER", "ADMIN")
+                .requestMatchers("/driver-deliveries.html").hasAnyRole("DRIVER")
+                .requestMatchers("/customer-order.html", "/customer-deliveries.html").hasAnyRole("CUSTOMER")
                 // 고객 관련 API는 CUSTOMER 또는 ADMIN만 접근 가능
                 .requestMatchers("/customers/**").hasAnyRole("CUSTOMER", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/drivers").hasRole("ADMIN")
@@ -66,32 +66,45 @@ public class SecurityConfig {
             )
             // 기본 form login 사용
             .formLogin(form -> form
+                .loginPage("/login.html")
+                .loginProcessingUrl("/login")
+                // 로그인 성공 시 role에 따라 다른 페이지로 보내기 위해 custom success handler 사용 
                 .successHandler(authenticationSuccessHandler())
+                .failureUrl("/login.html?error")
                 .permitAll()
             )
             // 로그아웃 설정
             .logout(logout -> logout
                 // 로그아웃 성공 후 이동할 URL
-                .logoutSuccessUrl("/login?logout")
+                .logoutSuccessUrl("/login.html?logout")
                 // 로그아웃 요청은 누구나 접근 가능
                 .permitAll()
             );
         // 위 설정을 기반으로 SecurityFilterChain 생성
         return http.build();
     }
+
+    // 로그인 성공 후 사용자의 role에 따라 이동할 페이지를 정하는 Handler 
     @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
         return (request, response, authentication) -> {
+            // 현재 로그인한 사용자가 ADMIN 권한을 가지고 있는지 확인
             boolean isAdmin = authentication.getAuthorities().stream().anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+            // 헌재 로그인한 사용자가 DRIVER 권한을 가지고 있는지 확인
             boolean isDriver = authentication.getAuthorities().stream().anyMatch(authority -> authority.getAuthority().equals("ROLE_DRIVER"));
+            // 현재 로그인한 사용자가 CUSTOMER 권한을 가지고 있는지 확인 
             boolean isCustomer = authentication.getAuthorities().stream().anyMatch(authority -> authority.getAuthority().equals("ROLE_CUSTOMER"));
 
+            // ADMIN이면 관리자 페이지로 이동
             if (isAdmin) {
                 response.sendRedirect("/admin.html");
+            // DRIVER이면 배송기사 배송 목록 페이지로 이동
             } else if (isDriver) {
                 response.sendRedirect("/driver-deliveries.html");
+            // CUSTOMER이면 고객 주문 페이지로 이동
             } else if (isCustomer) {
                 response.sendRedirect("/customer-order.html");
+            // 어떤 role에도 해당하지 않으면 로그인 페이지로 이동
             } else {
                 response.sendRedirect("/login");
             }

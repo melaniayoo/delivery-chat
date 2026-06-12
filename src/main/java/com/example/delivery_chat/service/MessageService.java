@@ -23,6 +23,7 @@ public class MessageService {
     }
 
     public void sendMessage(Long deliveryId, MessageRequest request) {
+        // MessageMapper를 통해 messages 테이블에 메세지 저장 
         messageMapper.insertMessage(deliveryId, request.getSenderType(), request.getSenderId(), request.getContent());
     }
 }

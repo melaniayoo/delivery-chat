@@ -24,11 +24,13 @@ public class MessageController {
     }
 
     // Handles GET requests to /deliveries/{deliveryId}/messages
+    // 특정 배송의 메시지 목록 조회 
     @GetMapping("/deliveries/{deliveryId}/messages")
     public List<Message> getMessagesByDeliveryId(@PathVariable Long deliveryId) {
         return messageService.getMessagesByDeliveryId(deliveryId);
     }
 
+    // 특정 배송에 메세지를 전송
     @PostMapping("/deliveries/{deliveryId}/messages")
     public String sendMessage(@PathVariable Long deliveryId, @RequestBody MessageRequest request) {
         messageService.sendMessage(deliveryId, request);

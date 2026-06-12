@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-
 @RestController
 public class CustomerController {
     private final CustomerService customerService;
@@ -27,6 +26,7 @@ public class CustomerController {
         return customerService.getAllCustomers();
     }
 
+    // 고객 생성 API, POST /customers 요청이 들어오면 실행됨
     @PostMapping("/customers")
     public String createCustomer(@RequestBody CustomerRequest request) {
         customerService.createCustomer(request);

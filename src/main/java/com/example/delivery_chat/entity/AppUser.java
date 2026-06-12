@@ -1,5 +1,6 @@
 package com.example.delivery_chat.entity;
 
+// 로그인 계정 정보를 담는 클래스
 public class AppUser {
     private Long id;
     private String username;

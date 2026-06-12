@@ -1,5 +1,6 @@
 package com.example.delivery_chat.dto;
 
+// 고객 회원가입 요청 데이터
 public class RegisterRequest {
     private String username;
     private String password;

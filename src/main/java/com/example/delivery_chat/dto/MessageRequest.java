@@ -1,5 +1,6 @@
 package com.example.delivery_chat.dto;
 
+// 메세지 전송 데이터
 public class MessageRequest {
     private String senderType;
     private Long senderId;

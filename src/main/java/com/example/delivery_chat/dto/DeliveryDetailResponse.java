@@ -1,5 +1,6 @@
 package com.example.delivery_chat.dto;
 
+// 배송 상세 정보 응답
 public class DeliveryDetailResponse {
     private Long deliveryId;
     private String customerName;

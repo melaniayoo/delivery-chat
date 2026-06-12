@@ -1,5 +1,6 @@
 package com.example.delivery_chat.dto;
 
+// 현재 로그인 사용자 정보 응답
 public class AuthMeResponse {
     private String username;
     private String role;

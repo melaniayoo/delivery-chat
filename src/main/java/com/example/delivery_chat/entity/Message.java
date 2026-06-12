@@ -1,5 +1,6 @@
 package com.example.delivery_chat.entity;
 
+// 메세지 정보를 담은 클래스 
 public class Message {
     private Long id;
     private Long deliveryId;

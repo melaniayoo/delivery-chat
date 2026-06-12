@@ -2,25 +2,43 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>회원가입</title>
+    <title>로그인 / 회원가입</title>
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
     <div class="container">
         <div class="page-header">
-            <h1>회원가입</h1>
-            <p>고객 또는 배송기사 계정을 생성할 수 있습니다.</p>
-
-            <div class="nav-links">
-                <a href="/login">로그인</a>
-            </div>
+            <h1>Delivery Chat</h1>
+            <p>로그인하거나 고객 계정을 새로 생성할 수 있습니다.</p>
         </div>
+
+        <div class="card">
+            <h2>로그인</h2>
+
+            <form action="/login" method="post">
+                <div class="form-row">
+                    <label>Username:</label>
+                    <input type="text" name="username" placeholder="username" required>
+                </div>
+
+                <div class="form-row">
+                    <label>Password:</label>
+                    <input type="password" name="password" placeholder="password" required>
+                </div>
+
+                <button type="submit">로그인</button>
+            </form>
+
+            <p id="loginMessage"></p>
+        </div>
+
         <div class="card">
             <h2>고객 회원가입</h2>
-            
+            <p>배송기사 계정은 관리자가 생성합니다.</p>
+
             <div class="form-row">
                 <label>Username:</label>
-                <input type="text" id="customerUsername" placeholder="예: myuser01">
+                <input type="text" id="customerUsername" placeholder="예: melania">
             </div>
 
             <div class="form-row">
@@ -30,7 +48,7 @@
 
             <div class="form-row">
                 <label>이름:</label>
-                <input type="text" id="customerName" placeholder="예: 홍길동">
+                <input type="text" id="customerName" placeholder="예: Melania">
             </div>
 
             <div class="form-row">
@@ -73,14 +91,32 @@
                 return response.text();
             })
             .then(result => {
-                alert("고객 회원가입이 완료되었습니다. 로그인해주세요.");
-                window.location.href="/login";
+                alert("고객 회원가입이 완료되었습니다. 이제 로그인해주세요.");
+
+                document.getElementById("customerUsername").value = "";
+                document.getElementById("customerPassword").value = "";
+                document.getElementById("customerName").value = "";
+                document.getElementById("customerPhoneNumber").value = "";
             })
             .catch(error => {
                 console.error("고객 회원가입 실패:", error);
-                alert("고객 회원가입에 실패했습니다. username이 이미 사용 중일 수 있습니다.");
+                alert("회원가입에 실패했습니다. username이 이미 사용 중일 수 있습니다.");
             });
         }
+
+        window.onload = function () {
+            const params = new URLSearchParams(window.location.search);
+
+            if (params.has("error")) {
+                document.getElementById("loginMessage").textContent =
+                    "로그인에 실패했습니다. username 또는 password를 확인해주세요.";
+            }
+
+            if (params.has("logout")) {
+                document.getElementById("loginMessage").textContent =
+                    "로그아웃되었습니다.";
+            }
+        };
     </script>
 </body>
 </html>

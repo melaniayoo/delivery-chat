@@ -15,6 +15,7 @@ public interface CustomerMapper {
     @Select ("SELECT id, name, phone_number AS phoneNumber FROM customers")
     List<Customer> findAll();
 
+    // 새로운 고객 정보를 customer 테이블에 저장하는 메서드
     @Insert("""
         INSERT INTO customers (name, phone_number)
         VALUES (#{name}, #{phoneNumber})

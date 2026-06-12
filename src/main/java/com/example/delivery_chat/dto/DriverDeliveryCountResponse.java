@@ -1,5 +1,6 @@
 package com.example.delivery_chat.dto;
 
+// 배송기사별 배송 개수를 응답할 때 사용하는 DTO
 public class DriverDeliveryCountResponse {
     private Long driverId;
     private Long deliveryCount;

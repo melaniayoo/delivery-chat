@@ -84,6 +84,7 @@ public interface DeliveryMapper {
     """)
     List<Delivery> findByCustomerId(Long customerId);
 
+    // 새로운 배송 정보를 deliveries 테이블에 저장하는 메서드
     @Insert("""
         INSERT INTO deliveries (customer_id, driver_id, delivery_address, status)
         VALUES (#{customerId}, #{driverId}, #{deliveryAddress}, #{status})
@@ -93,6 +94,7 @@ public interface DeliveryMapper {
                         @Param("deliveryAddress") String deliveryAddress,
                         @Param("status") String status);
 
+    // 배송기사별 현재 담당 배송 개수를 조회하는 메서드 
     @Select("""
         SELECT
             dr.id AS driverId,

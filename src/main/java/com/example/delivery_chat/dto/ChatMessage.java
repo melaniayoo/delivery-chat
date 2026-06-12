@@ -1,4 +1,4 @@
-package com.example.delivery_chat.websocket;
+package com.example.delivery_chat.dto;
 
 public class ChatMessage {
     private Long deliveryId;

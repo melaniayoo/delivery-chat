@@ -26,6 +26,7 @@ public interface MessageMapper {
             """)
     List<Message> findByDeliveryId(Long deliveryId);
 
+    // 새로운 채팅 메세지를 messages 테이블에 저장하는 메서드 
     @Insert("""
         INSERT INTO messages (delivery_id, sender_type, sender_id, content)
         VALUES (#{deliveryId}, #{senderType}, #{senderId}, #{content})
